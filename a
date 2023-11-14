@@ -1,0 +1,159 @@
+import pygame
+from sys import exit
+pygame.init()
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 51)
+YELLOW = (255, 255, 0)
+DARK_BLUE = (0, 0, 100)
+LIGHT_BLUE = (0, 255, 255)
+BLUE = (80, 80, 255)
+LIGHT_GREEN = (200, 255, 200)
+LIGHT_RED = (250, 128, 114)
+
+window = pygame.display.set_mode((500,500))
+window.fill(LIGHT_BLUE)
+clock = pygame.time.Clock()
+platform_x=200
+platform_y=450
+
+dx = 20
+dy = 20
+
+move_right = False
+move_left = False
+
+run = True
+
+class Area:
+    def __init__(self, height, width, x, y, color):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.fill_color = LIGHT_BLUE
+        if color:
+            self.fill_color = color
+    
+    def color(self, new_color):
+        self.fill_color = new_color
+    
+    def fill(self):
+        pygame.draw.rect(window,self.fill_color, self.rect)
+    
+    def hitbox(self,x,y):
+        return self.rect.collidepoint(x,y)
+    
+    def hit_rec(self,rect):
+        return self.rect.colliderect(rect)
+
+class Label(Area):
+    def set_text(self, text, fsize=18, text_color=BLACK):
+        self.image = pygame.font.SysFont("verdana", fsize).render(text, True, text_color)
+
+    def draw(self, x_shift=0, y_shift=0):
+        self.fill()
+        window.blit(self.image,(self.rect.x + x_shift,self.rect.y + y_shift))
+        
+
+
+class Picture(Area):
+    def __init__(self,filename,x,y,width,height):
+        Area.__init__(self,x=x,y=y,width=width,height=height,color=LIGHT_BLUE)
+        self.image = pygame.image.load(filename)
+    def draw(self):
+        window.blit(self.image,(self.rect.x,self.rect.y))
+
+
+ball = Picture("ball.png", 225, 200, 50, 50)
+platform = Picture("platform.png", platform_x, platform_y, 100, 25)
+
+monster_x=5
+monster_y=5
+counter = 9 
+
+monsters = []
+for j in range(3):
+    y = monster_y + (55 * j)
+    x = monster_x + (27.5 * j)
+    for i in range(counter):
+        z = Picture("enemy.png",x,y,50,50)
+        monsters.append(z)
+        x += 55
+    counter -= 1
+
+
+while run:
+    ball.fill()
+    platform.fill()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            exit()
+            pygame.quit()
+            run = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                move_right = True
+            elif event.key == pygame.K_LEFT:
+                move_left = True
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_RIGHT:
+                move_right = False
+            elif event.key == pygame.K_LEFT:
+                move_left = False
+    if move_right:
+        platform.rect.x += 5
+
+    if move_left:
+        platform.rect.x -= 5
+
+    ball.rect.x += dx
+    ball.rect.y += dy
+
+    if ball.rect.y < 0:
+        dy *= -1
+
+    if ball.rect.x > 450 or ball.rect.x < 0:
+        dx *= -1
+  
+
+    if ball.rect.y > 500:
+        losing_text = Label(150, 150, 50, 50, LIGHT_BLUE)
+        losing_text.set_text("YOU LOSE", 18, BLACK)
+        losing_text.draw(10,10)
+        run = False
+
+
+        
+    if len(monsters) == 0:
+        win_text = Label(150, 150, 50, 50, LIGHT_BLUE)
+        win_text.set_text("YOU WIN", 18, BLACK)
+        win_text.draw(10,10)   
+        run = False    
+
+    if ball.rect.colliderect(platform.rect):
+        dy *= -1
+
+    for monster in monsters:
+        monster.draw()
+        if monster.rect.colliderect(ball.rect):
+            monsters.remove(monster)
+            monster.fill()
+            dy *= -1
+    ball.draw()
+    platform.draw()
+    pygame.display.update()
+    clock.tick(60)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
